@@ -40,8 +40,7 @@
                                 <div class="form-group">
                                     <label for="">Option</label>
                                     <select v-model="item.option" class="form-control">
-                                        <option v-for="variant in variants"
-                                                :value="variant.id">
+                                        <option v-for="variant in variants" :value="variant.id" >
                                             {{ variant.title }}
                                         </option>
                                     </select>
@@ -130,7 +129,10 @@ export default {
                 thumbnailWidth: 150,
                 maxFilesize: 0.5,
                 headers: {"My-Awesome-Header": "header value"}
-            }
+            },
+            isEdit : false,
+            priceArr :[],
+            id:'',
         }
     },
     methods: {
@@ -155,11 +157,11 @@ export default {
                 tags.push(item.tags);
             })
 
-            this.getCombn(tags).forEach(item => {
+            this.getCombn(tags).forEach((item,index) => {
                 this.product_variant_prices.push({
                     title: item,
-                    price: 0,
-                    stock: 0
+                    price:  this.priceArr[index]? this.priceArr[index].price : 0,
+                    stock: this.priceArr[index] ? this.priceArr[index].stock :0
                 })
             })
         },
@@ -188,12 +190,24 @@ export default {
                 product_variant_prices: this.product_variant_prices
             }
 
+            if(!this.isEdit){
+                axios.post('/product', product).then(response => {
+                    console.log(response.data);
+                    this.$router.push('/product');
+                }).catch(error => {
+                    console.log(error);
+                })
+            }else{
+                axios.patch('/product/'+this.id, product).then(response => {
+                    console.log(response.data);
+                    this.$router.push('/product');
+                }).catch(error => {
+                    console.log(error);
+                })
+            }
 
-            axios.post('/product', product).then(response => {
-                console.log(response.data);
-            }).catch(error => {
-                console.log(error);
-            })
+
+
 
             console.log(product);
         }
@@ -201,19 +215,30 @@ export default {
 
     },
     mounted() {
-        self = this;
         const url = window.location.href;
         const lastParam = url.split("/").slice(-2)[0];
         if(!isNaN(lastParam)){
+            this.id = lastParam;
+            this.isEdit = true;
             axios.get('/product/'+lastParam).then(response => {
-                console.log(response.data);
                 this.product_name = response.data.result.title;
                 this.product_sku = response.data.result.sku;
                 this.description = response.data.result.description;
-                this.product_variant = response.data.result.product_variant_price;
-                //this.variants = response.data.result.description;
-            //product_sku: '',
-            //description: '',
+                this.priceArr = response.data.result.product_variant_price;
+                let data = response.data.result.product_variant;
+
+                let arr = [];
+                let obj = {}
+
+                data.forEach(function(e){
+                    obj.option = e.variant_id;
+                    obj.tags = e.v.split(",");
+                    arr.push(obj);
+                    obj = {};
+                });
+                this.product_variant = arr;
+                this.checkVariant();
+
             }).catch(error => {
                 console.log(error);
             })

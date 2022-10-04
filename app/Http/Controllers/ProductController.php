@@ -20,7 +20,7 @@ class ProductController extends Controller
     {
         $params = $request->all();
         $query = $product->filters($params);
-        $query = $query->paginate(2);
+        $query = $query->paginate(config('constants.max_pagination'));
         $links =  $query->appends($params)->links();
         $products = $query->toArray();
         $variants = $variant->with(['productVariant' => function($q){
@@ -46,34 +46,13 @@ class ProductController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, Product $product)
     {
         try {
             $data = $request->all();
             DB::beginTransaction();
-            $product = Product::create($data);
-            if(isset($data['product_variant_prices']) && is_array($data['product_variant_prices'])){
-                foreach($data['product_variant_prices'] as $pvp){
-                    $title = explode("/",$pvp['title'],-1);
-                    $pvArr = [];
-                    foreach($title as $k=>$t){
-                        $productVariant =new ProductVariant();
-                        $productVariant->variant_id = $data['product_variant'][$k]['option'];
-                        $productVariant->product_id = $product->id;
-                        $productVariant->variant = $t;
-                        $productVariant->save();
-                        array_push($pvArr,$productVariant->id);
-                    }
-                    $variantPrice = new ProductVariantPrice();
-                    $variantPrice->price = $pvp['price'];
-                    $variantPrice->stock = $pvp['stock'];
-                    $variantPrice->product_variant_one = !empty($pvArr[0]) ? $pvArr[0]: null;
-                    $variantPrice->product_variant_two = !empty($pvArr[1]) ? $pvArr[1]: null;
-                    $variantPrice->product_variant_three = !empty($pvArr[2]) ? $pvArr[2]: null;
-                    $variantPrice->product_id = $product->id;
-                    $variantPrice->save();
-                }
-            }
+            $saveProduct = $product->create($data);
+            $product->saveData($data,$saveProduct);
             DB::commit();
         } catch (\Throwable $th) {
 
@@ -92,9 +71,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         $params['id'] =  $product->id;
-
         $result = $product->filters($params);
-        //$result = $product;
         return response()->json(
             [
                 'result' => $result
@@ -113,7 +90,6 @@ class ProductController extends Controller
         $variants = Variant::all();
         $params['id'] = $product->id;
         $result = $product->filters($params);
-        //dd($result);
         return view('products.edit', compact('variants','result'));
     }
 
@@ -126,7 +102,20 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        //
+
+        try {
+            $data = $request->all();
+            DB::beginTransaction();
+            $product->update($data);
+            $productVariant =new ProductVariant();
+            $variantPrice = new ProductVariantPrice();
+            $productVariant->where('product_id',$product->id)->delete();
+            $variantPrice->where('product_id',$product->id)->delete();
+            $product->saveData($data,$product);
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+        }
     }
 
     /**

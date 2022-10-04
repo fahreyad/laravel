@@ -14,11 +14,19 @@
                     <input type="text" name="title" placeholder="Product Title" class="form-control" value="">
                 </div>
                 <div class="col-md-2">
+
                     <select name="variant" id="" class="form-control">
+
                         <option value="">-- Select A Variant-</option>
                         @foreach ($variants as $variant)
-                            <option value="{{$variant->id}}">{{$variant->title}}</option>
+                            <optgroup label={{$variant->title}}>
+                                @foreach ($variant->productVariant as $pv )
+                                    <option value="{{$pv->variant}}">{{$pv->variant}}</option>
+                                @endforeach
+                            </optgroup>
+
                         @endforeach
+
                     </select>
                 </div>
 
