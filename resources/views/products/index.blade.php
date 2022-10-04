@@ -11,11 +11,14 @@
         <form action="" method="get" class="card-header">
             <div class="form-row justify-content-between">
                 <div class="col-md-2">
-                    <input type="text" name="title" placeholder="Product Title" class="form-control">
+                    <input type="text" name="title" placeholder="Product Title" class="form-control" value="">
                 </div>
                 <div class="col-md-2">
                     <select name="variant" id="" class="form-control">
-
+                        <option value="">-- Select A Variant-</option>
+                        @foreach ($variants as $variant)
+                            <option value="{{$variant->id}}">{{$variant->title}}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -51,32 +54,47 @@
                     </thead>
 
                     <tbody>
+                        @foreach ($products['data'] as $product)
 
-                    <tr>
-                        <td>1</td>
-                        <td>T-Shirt <br> Created at : 25-Aug-2020</td>
-                        <td>Quality product in low cost</td>
-                        <td>
-                            <dl class="row mb-0" style="height: 80px; overflow: hidden" id="variant">
 
-                                <dt class="col-sm-3 pb-0">
-                                    SM/ Red/ V-Nick
-                                </dt>
-                                <dd class="col-sm-9">
-                                    <dl class="row mb-0">
-                                        <dt class="col-sm-4 pb-0">Price : {{ number_format(200,2) }}</dt>
-                                        <dd class="col-sm-8 pb-0">InStock : {{ number_format(50,2) }}</dd>
+                        <tr>
+                            <td>{{$product['id']}}</td>
+                            <td>{{$product['title']}} <br> Created at : {{$product['created_at']}}</td>
+                            <td>{{substr($product['description'],0,20).'...'}}</td>
+                            <td>
+
+                                <dl class="row mb-0" style="height: 80px; overflow: hidden" id="variant">
+                                    @foreach ( $product['product_variant_price'] as $p)
+                                    <dl class="row mb-0" style="height: 80px; overflow: hidden" id="variant">
+
+
+
+                                        <dt class="col-sm-3 pb-0">
+                                            {{!empty($p['variant_two']) ? $p['variant_two'] : ''}}
+                                            {{!empty($p['variant_one']) ? '/ '.$p['variant_one'] : ''}}
+                                            {{!empty($p['variant_three']) ? '/ '.$p['variant_three'] : ''}}
+                                        </dt>
+                                        <dd class="col-sm-9">
+                                            <dl class="row mb-0">
+                                                <dt class="col-sm-4 pb-0">Price : {{ number_format($p['price'],2) }}</dt>
+                                                <dd class="col-sm-8 pb-0">InStock : {{ number_format($p['stock'],2) }}</dd>
+                                            </dl>
+                                        </dd>
+
                                     </dl>
-                                </dd>
-                            </dl>
-                            <button onclick="$('#variant').toggleClass('h-auto')" class="btn btn-sm btn-link">Show more</button>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ route('product.edit', 1) }}" class="btn btn-success">Edit</a>
-                            </div>
-                        </td>
-                    </tr>
+                                    @endforeach
+                                </dl>
+
+                                <button  class="btn btn-sm btn-link show-more">Show more</button>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ route('product.edit', $product['id']) }}" class="btn btn-success">Edit</a>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+
 
                     </tbody>
 
@@ -88,13 +106,21 @@
         <div class="card-footer">
             <div class="row justify-content-between">
                 <div class="col-md-6">
-                    <p>Showing 1 to 10 out of 100</p>
+                    <p>Showing {{$products['from']}} to {{$products['to']}} out of {{$products['total']}}</p>
                 </div>
-                <div class="col-md-2">
-
+                <div class="col-md-3">
+                    {!! $links !!}
                 </div>
             </div>
         </div>
     </div>
 
 @endsection
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    $(document).ready(function(){
+        $('.show-more').on('click',function(){
+            $(this).prev().toggleClass('h-auto');
+        })
+    })
+</script>

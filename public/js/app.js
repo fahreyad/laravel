@@ -2117,6 +2117,26 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   mounted: function mounted() {
+    var _this2 = this;
+
+    self = this;
+    var url = window.location.href;
+    var lastParam = url.split("/").slice(-2)[0];
+
+    if (!isNaN(lastParam)) {
+      axios.get('/product/' + lastParam).then(function (response) {
+        console.log(response.data);
+        _this2.product_name = response.data.result.title;
+        _this2.product_sku = response.data.result.sku;
+        _this2.description = response.data.result.description;
+        _this2.product_variant = response.data.result.product_variant_price; //this.variants = response.data.result.description;
+        //product_sku: '',
+        //description: '',
+      })["catch"](function (error) {
+        console.log(error);
+      });
+    }
+
     console.log('Component mounted.');
   }
 });

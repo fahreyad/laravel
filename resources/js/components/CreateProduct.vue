@@ -201,6 +201,23 @@ export default {
 
     },
     mounted() {
+        self = this;
+        const url = window.location.href;
+        const lastParam = url.split("/").slice(-2)[0];
+        if(!isNaN(lastParam)){
+            axios.get('/product/'+lastParam).then(response => {
+                console.log(response.data);
+                this.product_name = response.data.result.title;
+                this.product_sku = response.data.result.sku;
+                this.description = response.data.result.description;
+                this.product_variant = response.data.result.product_variant_price;
+                //this.variants = response.data.result.description;
+            //product_sku: '',
+            //description: '',
+            }).catch(error => {
+                console.log(error);
+            })
+        }
         console.log('Component mounted.')
     }
 }
